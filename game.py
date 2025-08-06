@@ -1,105 +1,123 @@
 from random import randint, choice
+from pygame import Rect
 
-# Dimensões da janela do jogo
+# --- Configurações da janela ---
 WIDTH = 800
 HEIGHT = 600
 
-# Estado do jogo
+# --- Estados globais ---
 jogo_ativo = False
+game_over = False
+colidiu = False
 som_ligado = True
-
-# Botões do menu
-botao_iniciar = Actor("btniniciar", pos=(80, 50))
-botao_sair = Actor("btnsair", pos=(80, 100))
-botao_som_desligado = Actor("btnsomdesligado", pos=(80, 150))
-botao_som_ligado = Actor("btnsomligado", pos=(80, 150))
-
-# Elementos visuais
-jogador = Actor("alien", pos=(400, 300))
-fundo = Actor("bg2", pos=(WIDTH // 2, HEIGHT // 2))
-fundocopy = Actor("bg2", pos=(WIDTH + WIDTH // 2, HEIGHT // 2))
-jogador.pos = (400, 500)
-
-# Barreira inicial e pontuação
-img_barreiras = ["arm1", "arm2", "arm3", "arm4"]
-barreiras = []
+musica_atual = None
 pontos = 0
 
-nova = Actor(choice(img_barreiras), pos=(WIDTH + 50, randint(50, HEIGHT - 50)))
-nova.width = 10
-nova.height = 10
-barreiras.append(nova)
+# --- Ator principal e fundos ---
+jogador = Actor("alien", pos=(400, 500))
+fundo = Actor("bg2", pos=(WIDTH // 2, HEIGHT // 2))
+fundocopy = Actor("bg2", pos=(WIDTH + WIDTH // 2, HEIGHT // 2))
+menu_background = Actor("menu_background", pos=(WIDTH // 2, HEIGHT // 2))
 
+# --- Botões ---
+botao_iniciar = Actor("btniniciar", pos=(80, 50))
+botao_sair = Actor("btnsair", pos=(80, 100))
+botao_som = Actor("btnsomligado", pos=(80, 150))
+botao_tentar = Actor("btniniciar", pos=(WIDTH // 2, HEIGHT // 2 + 80))
+botao_menu = Actor("btnsair", pos=(WIDTH // 2, HEIGHT // 2 + 140))  # Voltar ao menu
 
-# Desenha todos os elementos da tela
+# --- Barreiras ---
+img_barreiras = ["arm1", "arm2", "arm3", "arm4"]
+barreiras = []
+
+# --- Funções principais ---
+
+def reiniciar_jogo():
+    global jogo_ativo, game_over, colidiu, pontos, barreiras
+    jogo_ativo = True
+    game_over = False
+    colidiu = False
+    pontos = 0
+    barreiras.clear()
+    jogador.pos = (400, 500)
+    jogador.image = "alien"  # Voltar imagem padrão
+    atualizar_musica()
+
+def voltar_menu():
+    global jogo_ativo, game_over, colidiu, pontos, barreiras
+    jogo_ativo = False
+    game_over = False
+    colidiu = False
+    pontos = 0
+    barreiras.clear()
+    jogador.pos = (400, 500)
+    jogador.image = "alien"  # Voltar imagem padrão
+    atualizar_musica()
+
 def draw():
     screen.clear()
-    if not jogo_ativo:
-        screen.draw.text("MENU PRINCIPAL", center=(400, 100), fontsize=50, color="white")
-        botao_iniciar.draw()
-        botao_sair.draw()
-        botao_som_desligado.draw()
-        botao_som_ligado.draw()
-    else:
-        screen.draw.text("JOGO COMEÇOU!", center=(400, 100), fontsize=50, color="white")
+    if jogo_ativo:
         fundo.draw()
         fundocopy.draw()
         jogador.draw()
         for barreira in barreiras:
             barreira.draw()
-
         screen.draw.text(f"Pontos: {pontos}", topleft=(10, 10), fontsize=30, color="white")
+    
+    elif game_over:
+        fundo.draw()
+        fundocopy.draw()
+        jogador.draw()
+        for barreira in barreiras:
+            barreira.draw()
+        screen.draw.text("TENTAR NOVAMENTE", center=(WIDTH // 2, HEIGHT // 2 - 40), fontsize=60, color="lime")
+        screen.draw.text(f"Pontos: {pontos}", topleft=(10, 10), fontsize=30, color="white")
+        botao_tentar.draw()
+        botao_menu.draw()
 
+    else:
+        menu_background.draw()
+        screen.draw.text("RUN ALIEN", center=(400, 100), fontsize=50, color="white")
+        botao_iniciar.draw()
+        botao_sair.draw()
+        botao_som.draw()
 
-# Detecta cliques do mouse nos botões
 def on_mouse_down(pos):
-    global jogo_ativo, som_ligado, pontos, barreiras
+    global som_ligado
 
-    if botao_iniciar.collidepoint(pos):
-        jogo_ativo = True
-        pontos = 0
-        barreiras.clear()
-        jogador.pos = (400, 500)
-    elif botao_som_desligado.collidepoint(pos):
-        som_ligado = not som_ligado
-        if som_ligado:
-            botao_som_ligado.image = "btnsomligado"
-        else:
-            botao_som_ligado.image = "btnsomdesligado"
-    elif botao_sair.collidepoint(pos):
-        quit()  # Sai do jogo
+    if game_over:
+        if botao_tentar.collidepoint(pos):
+            reiniciar_jogo()
+        elif botao_menu.collidepoint(pos):
+            voltar_menu()
 
+    elif not jogo_ativo:
+        if botao_iniciar.collidepoint(pos):
+            reiniciar_jogo()
+        elif botao_sair.collidepoint(pos):
+            exit()
+        elif botao_som.collidepoint(pos):
+            som_ligado = not som_ligado
+            botao_som.image = "btnsomligado" if som_ligado else "btnsomdesligado"
+            atualizar_musica()
 
-# Controla movimentação do jogador via teclado
 def teclas():
     if keyboard.up:
-        jogador.y -= 5
+        jogador.y = max(jogador.height//2, jogador.y - 5)
     if keyboard.down:
-        jogador.y += 5
+        jogador.y = min(HEIGHT - jogador.height//2, jogador.y + 5)
     if keyboard.left:
-        jogador.x -= 5
+        jogador.x = max(jogador.width//2, jogador.x - 5)
     if keyboard.right:
-        jogador.x += 5
+        jogador.x = min(WIDTH - jogador.width//2, jogador.x + 5)
 
-    # Impede que o jogador ultrapasse os limites da tela
-    jogador.y = max(0, min(jogador.y, HEIGHT))
-    jogador.x = max(0, min(jogador.x, WIDTH))
-
-
-# Gera novas barreiras com posição e imagem aleatória
 def criar_barreiras():
     imagem = choice(img_barreiras)
-    aleatorio_x = randint(50, HEIGHT - 50)
-    barreira = Actor(imagem, pos=(WIDTH + 50, aleatorio_x))
-
-    barreira.width = 50
-    barreira.height = 50
-    barreira.angle = 90 if imagem else 0
-
+    pos_y = randint(50, HEIGHT - 50)
+    barreira = Actor(imagem, pos=(WIDTH + 50, pos_y))
+    barreira.angle = 90
     barreiras.append(barreira)
 
-
-# Move barreiras e atualiza pontuação ao passar pela tela
 def mover_barreiras():
     global pontos
     for barreira in barreiras[:]:
@@ -108,31 +126,55 @@ def mover_barreiras():
             barreiras.remove(barreira)
             pontos += 1
 
-
-# Atualiza estado do jogo a cada frame
 def update():
-    global jogo_ativo
-
+    global jogo_ativo, game_over, colidiu
     if jogo_ativo:
         teclas()
+
+        # Scroll do fundo
         fundo.x -= 2
         fundocopy.x -= 2
 
-        # Troca fundo para dar efeito de scroll contínuo
         if fundo.right < 0:
             fundo.left = fundocopy.right
         if fundocopy.right < 0:
             fundocopy.left = fundo.right
 
-        # Cria barreiras aleatoriamente
+        # Criar barreiras
         if randint(0, 30) == 0:
             criar_barreiras()
 
         mover_barreiras()
 
-        # Verifica colisão entre o jogador e as barreiras
+        # Detectar colisão
         for barreira in barreiras:
-            if barreira.colliderect(jogador):
+            jogador_rect_reduzido = Rect(jogador.x - 20, jogador.y - 20, 40, 40)
+            barreira_rect_reduzido = Rect(barreira.x - 20, barreira.y - 20, 40, 40)
+            if barreira_rect_reduzido.colliderect(jogador_rect_reduzido) and not colidiu:
+                colidiu = True
+                if som_ligado:
+                    sounds.colidir_music.play()  # toca som antes
+                jogador.image = "colisao_alien"
                 jogo_ativo = False
+                game_over = True
+                # Removi o atualizar_musica() para não cortar o som
                 print("COLISÃO! Fim de jogo.")
                 break
+
+
+def atualizar_musica():
+    global musica_atual
+    if not som_ligado:
+        sounds.stop()
+        musica_atual = None
+        return
+
+    nova_musica = "game_music" if jogo_ativo else "menu_music"
+
+    if musica_atual != nova_musica:
+        music.stop()
+        music.play(nova_musica)
+        musica_atual = nova_musica
+
+# Inicialização
+atualizar_musica()
