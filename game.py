@@ -22,9 +22,10 @@ fundocopy = Actor("bg2", pos=(WIDTH + WIDTH // 2, HEIGHT // 2))  # Cópia para c
 menu_background = Actor("menu_background", pos=(WIDTH // 2, HEIGHT // 2))  # Fundo do menu
 
 # --- Botões do menu e game over ---
-botao_iniciar = Actor("btniniciar", pos=(80, 50))
-botao_sair = Actor("btnsair", pos=(80, 100))
-botao_som = Actor("btnsomligado", pos=(80, 150))
+botao_iniciar = Actor("btniniciar", pos=(80, 60))
+botao_sair = Actor("btnsair", pos=(80, 130))
+botao_som = Actor("btnsomligado", pos=(80, 200))
+
 botao_tentar = Actor("btniniciar", pos=(WIDTH // 2, HEIGHT // 2 + 80))   # Usado para tentar novamente
 botao_menu = Actor("btnsair", pos=(WIDTH // 2, HEIGHT // 2 + 140))       # Retorna ao menu principal
 
@@ -102,15 +103,18 @@ def on_mouse_down(pos):
             voltar_menu()
 
     elif not jogo_ativo:
-        if botao_iniciar.collidepoint(pos):
-            reiniciar_jogo()
-        elif botao_sair.collidepoint(pos):
-            exit()
-        elif botao_som.collidepoint(pos):
-            # Alterna som ligado/desligado
+        # Verifica o botão de som antes do botão sair
+        if botao_som.collidepoint(pos):
             som_ligado = not som_ligado
             botao_som.image = "btnsomligado" if som_ligado else "btnsomdesligado"
             atualizar_musica()
+
+        elif botao_iniciar.collidepoint(pos):
+            reiniciar_jogo()
+
+        elif botao_sair.collidepoint(pos):
+            exit()
+
 
 # Lê as teclas pressionadas para mover o jogador
 def teclas():
@@ -167,17 +171,16 @@ def update():
             barreira_rect_reduzido = Rect(barreira.x - 20, barreira.y - 20, 40, 40)
             if barreira_rect_reduzido.colliderect(jogador_rect_reduzido) and not colidiu:
                 colidiu = True
-                tempo_colisao = time.time()
                 jogador.image = "colisao_alien"
                 if som_ligado:
-                    sounds.colidir_music.play()
+                    sounds.eep.play()
                 break
 
-    elif colidiu and not game_over:
-        # Aguarda 1 segundo após colisão para mostrar tela de fim de jogo
-        if time.time() - tempo_colisao >= 1.0:
-            game_over = True
-            jogo_ativo = False
+            elif colidiu and not game_over:
+                # Aguarda 1 segundo após colisão para mostrar tela de fim de jogo
+                if time.time() - tempo_colisao >= 1.0:
+                    game_over = True
+                    jogo_ativo = False
 
 # Controla a música do jogo conforme estado (menu ou jogo)
 def atualizar_musica():
