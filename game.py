@@ -64,6 +64,7 @@ def draw():
     screen.clear()
 
     if jogo_ativo:
+        
         # Desenha o fundo, jogador, barreiras e pontuação
         fundo.draw()
         fundocopy.draw()
@@ -88,6 +89,7 @@ def draw():
         # Exibe o menu inicial
         menu_background.draw()
         screen.draw.text("RUN ALIEN", center=(400, 100), fontsize=50, color="white")
+        screen.draw.text("Jogo criado por: Eduardo Alves", center=(400, 590), fontsize=15, color="green")
         botao_iniciar.draw()
         botao_sair.draw()
         botao_som.draw()
@@ -167,7 +169,7 @@ def update():
 
         # Verifica colisão com barreiras
         for barreira in barreiras:
-            jogador_rect_reduzido = Rect(jogador.x - 20, jogador.y - 20, 40, 40)
+            jogador_rect_reduzido = Rect(jogador.x - 62, jogador.y - 72, 80, 80)
             barreira_rect_reduzido = Rect(barreira.x - 20, barreira.y - 20, 40, 40)
             if barreira_rect_reduzido.colliderect(jogador_rect_reduzido) and not colidiu:
                 colidiu = True
@@ -186,6 +188,7 @@ def update():
 def atualizar_musica():
     global musica_atual
     if not som_ligado:
+        music.stop()
         musica_atual = None
         return
 
