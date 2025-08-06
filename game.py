@@ -186,7 +186,6 @@ def update():
 def atualizar_musica():
     global musica_atual
     if not som_ligado:
-        sounds.stop()
         musica_atual = None
         return
 
