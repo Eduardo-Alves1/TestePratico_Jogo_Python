@@ -4,7 +4,6 @@
 
 ## 🎮 Demonstração
 
-![Run Alien Screenshot](screenshot.png) <!-- Adicione uma imagem se quiser -->
 
 ---
 
